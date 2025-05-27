@@ -1,15 +1,21 @@
 name: debezium-test
 services:
-  postgres:
-    image: postgres:${POSTGRES_VERSION:-16-alpine}
+  postgres-1:
+    image: postgres:${POSTGRES_VERSION:-14-alpine}
     ports:
       - 5432:5432
     environment:
-      POSTGRES_USER: debezium
-      POSTGRES_PASSWORD: 321muizebed
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
     volumes:
-      - ./docker/postgres/entrypoint:/docker-entrypoint-initdb.d:ro
+      - ./docker/postgres-1/entrypoint:/docker-entrypoint-initdb.d:ro
     command: ["postgres", "-c", "wal_level=logical"]
+    healthcheck:
+      test: pg_isready -U postgres --dbname=postgres
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   kafka-1:
     image: apache/kafka:${KAFKA_VERSION:-3.9.1}
