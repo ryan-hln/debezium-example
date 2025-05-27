@@ -1,0 +1,14 @@
+{
+  "name": "postgres-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "database.hostname": "postgres",
+    "database.port": "5432",
+    "database.user": "debezium",
+    "database.password": "321muizebed",
+    "database.dbname": "debezium",
+    "plugin.name": "pgoutput",
+    "table.include.list": "public.debezium_test_1,public.debezium_test_2",
+    "topic.prefix": "db_test"
+  }
+}
