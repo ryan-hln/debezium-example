@@ -8,14 +8,39 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
+      POSTGRES_HOST_AUTH_METHOD: "scram-sha-256\nhost replication all 0.0.0.0/0 trust"
     volumes:
       - ./docker/postgres-1/entrypoint:/docker-entrypoint-initdb.d:ro
     command: ["postgres", "-c", "wal_level=logical"]
     healthcheck:
       test: pg_isready -U postgres --dbname=postgres
-      interval: 10s
+      interval: 1s
       timeout: 5s
       retries: 5
+
+  postgres-2:
+    image: postgres:${POSTGRES_VERSION:-14-alpine}
+    ports:
+      - 5433:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    user: postgres
+    command: |
+      bash -c "
+      until pg_basebackup --pgdata=/var/lib/postgresql/data --write-recovery-conf --slot=repl_slot --host=postgres-1 --port=5432 --username=debezium
+      do
+      echo 'Waiting to perform initial replication...'
+      sleep 1s
+      done
+      echo 'Replication complete'
+      chmod 0700 /var/lib/postgresql/data
+      postgres
+      "
+    depends_on:
+      postgres-1:
+        condition: service_healthy
 
   kafka-1:
     image: apache/kafka:${KAFKA_VERSION:-3.9.1}
